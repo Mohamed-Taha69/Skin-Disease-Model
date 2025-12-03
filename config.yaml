@@ -1,0 +1,13 @@
+image_size: 224
+batch_size: 16
+num_classes: 4
+model_name: "efficientnet_b3"
+train_split: 0.7
+val_split: 0.15
+test_split: 0.15
+dataset_path: "./dataset/Monkeypox Skin Image Dataset/"
+classes:
+  - Monkeypox
+  - Chickenpox
+  - Measles
+  - Normal
