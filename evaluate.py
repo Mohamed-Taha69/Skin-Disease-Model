@@ -28,9 +28,11 @@ def main():
         return
 
     model = model.to(device)
-    
-    # Evaluate
-    evaluate_model(model, test_loader, device, config['classes'])
+
+    # Evaluate (with optional TTA if provided in config)
+    infer_cfg = config.get("infer", {})
+    tta = infer_cfg.get("tta", 0)
+    evaluate_model(model, test_loader, device, config['classes'], tta=tta)
 
 if __name__ == "__main__":
     main()

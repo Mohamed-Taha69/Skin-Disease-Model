@@ -22,7 +22,7 @@ data:
 train:
   model: efficientnet_b3
   pretrained: true
-  epochs: 20
+  epochs: 35
   batch_size: 16
   lr: 0.0001             # نفس اللي في الكونفج البسيط
   weight_decay: 0.01
@@ -33,16 +33,17 @@ train:
   class_weights: null     # أو [1,1,1,1] لو هتستخدم أوزان
   mixup: 0.0
   cutmix: 0.0
-  label_smoothing: 0.0
+  label_smoothing: 0.05
+  early_stopping_patience: 7
 
 aug:
   hflip: 0.5
   vflip: 0.15
-  rotate: 20
-  color_jitter: [0.1, 0.1, 0.1, 0.05]
+  rotate: 25
+  color_jitter: [0.15, 0.15, 0.15, 0.05]
   random_crop: true
-  random_erasing: 0.0
+  random_erasing: 0.1
   affine: null
 
 infer:
-  tta: 0
+  tta: 4
