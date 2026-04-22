@@ -35,6 +35,11 @@ train:
   cutmix: 0.0
   label_smoothing: 0.05
   early_stopping_patience: 7
+  kfold:
+    enabled: true
+    n_splits: 5
+    shuffle: true
+    random_state: 42
 
 aug:
   hflip: 0.5

@@ -123,3 +123,4 @@ class Trainer:
                 break
 
         print(f"\nTraining complete. Best Validation Accuracy: {best_acc:.2f}%")
+        return best_acc

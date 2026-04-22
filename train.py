@@ -6,7 +6,7 @@ import os
 
 from src.utils.config import load_config
 from src.utils.seed import set_global_seed
-from src.data.dataset_builder import build_dataloaders
+from src.data.dataset_builder import build_dataloaders, build_kfold_dataloaders
 from src.models.efficientnet import EfficientNetB3
 from src.training.trainer import Trainer
 
@@ -54,13 +54,6 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    print("Building dataloaders...")
-    train_loader, val_loader, test_loader = build_dataloaders(config)
-
-    print("Building model...")
-    model = EfficientNetB3(num_classes=data_cfg["num_classes"])
-    model = model.to(device)
-
     # Loss (with optional class weights & label smoothing)
     class_weights = train_cfg.get("class_weights")
     label_smoothing = float(train_cfg.get("label_smoothing", 0.0))
@@ -70,28 +63,73 @@ def main():
     else:
         weight_tensor = None
 
-    criterion = nn.CrossEntropyLoss(
-        weight=weight_tensor,
-        label_smoothing=label_smoothing if label_smoothing > 0.0 else 0.0,
-    )
+    use_kfold = bool(train_cfg.get("kfold", {}).get("enabled", False))
 
-    optimizer = build_optimizer(model, train_cfg)
-    scheduler = build_scheduler(optimizer, train_cfg)
+    if use_kfold:
+        print("Building k-fold dataloaders...")
+        fold_loaders, _ = build_kfold_dataloaders(config)
+        n_splits = len(fold_loaders)
+        fold_best_accs = []
 
-    trainer = Trainer(
-        model=model,
-        train_loader=train_loader,
-        val_loader=val_loader,
-        criterion=criterion,
-        optimizer=optimizer,
-        scheduler=scheduler,
-        device=device,
-        save_dir=project_cfg["checkpoints_dir"],
-        early_stopping_patience=train_cfg.get("early_stopping_patience"),
-    )
+        for fold_idx, (train_loader, val_loader) in enumerate(fold_loaders, start=1):
+            print(f"\n========== Fold {fold_idx}/{n_splits} ==========")
+            print("Building model...")
+            model = EfficientNetB3(num_classes=data_cfg["num_classes"]).to(device)
+            criterion = nn.CrossEntropyLoss(
+                weight=weight_tensor,
+                label_smoothing=label_smoothing if label_smoothing > 0.0 else 0.0,
+            )
+            optimizer = build_optimizer(model, train_cfg)
+            scheduler = build_scheduler(optimizer, train_cfg)
 
-    print("Starting training...\n")
-    trainer.train(epochs=train_cfg["epochs"])
+            trainer = Trainer(
+                model=model,
+                train_loader=train_loader,
+                val_loader=val_loader,
+                criterion=criterion,
+                optimizer=optimizer,
+                scheduler=scheduler,
+                device=device,
+                save_dir=os.path.join(project_cfg["checkpoints_dir"], f"fold_{fold_idx}"),
+                early_stopping_patience=train_cfg.get("early_stopping_patience"),
+            )
+
+            print("Starting training...\n")
+            best_acc = trainer.train(epochs=train_cfg["epochs"])
+            fold_best_accs.append(best_acc)
+
+        mean_acc = sum(fold_best_accs) / len(fold_best_accs)
+        print("\n========== K-Fold Summary ==========")
+        for i, acc in enumerate(fold_best_accs, start=1):
+            print(f"Fold {i} best val acc: {acc:.2f}%")
+        print(f"Mean best val acc: {mean_acc:.2f}%")
+    else:
+        print("Building dataloaders...")
+        train_loader, val_loader, _ = build_dataloaders(config)
+
+        print("Building model...")
+        model = EfficientNetB3(num_classes=data_cfg["num_classes"]).to(device)
+        criterion = nn.CrossEntropyLoss(
+            weight=weight_tensor,
+            label_smoothing=label_smoothing if label_smoothing > 0.0 else 0.0,
+        )
+        optimizer = build_optimizer(model, train_cfg)
+        scheduler = build_scheduler(optimizer, train_cfg)
+
+        trainer = Trainer(
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            criterion=criterion,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            device=device,
+            save_dir=project_cfg["checkpoints_dir"],
+            early_stopping_patience=train_cfg.get("early_stopping_patience"),
+        )
+
+        print("Starting training...\n")
+        trainer.train(epochs=train_cfg["epochs"])
 
 
 if __name__ == "__main__":
