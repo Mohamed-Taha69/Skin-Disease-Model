@@ -30,7 +30,6 @@ def build_dataloaders(config):
 
     train_dir = data_cfg["train_dir"]
     val_dir = data_cfg["val_dir"]
-    test_dir = data_cfg["test_dir"]
 
     img_size = data_cfg["img_size"]           # ← هنا مكان img_size الصحيح
     batch_size = config["train"]["batch_size"]
@@ -41,8 +40,6 @@ def build_dataloaders(config):
         raise FileNotFoundError(f"Training data not found at {train_dir}")
     if not os.path.exists(val_dir):
         raise FileNotFoundError(f"Validation data not found at {val_dir}")
-    if not os.path.exists(test_dir):
-        raise FileNotFoundError(f"Test data not found at {test_dir}")
 
     # التحويلات (باستخدام إعدادات الـ augmentation من الكونفج لو موجودة)
     aug_cfg = config.get("aug", {})
@@ -51,7 +48,6 @@ def build_dataloaders(config):
     # تحميل الداتا
     train_dataset = datasets.ImageFolder(train_dir, transform=train_tf)
     val_dataset = datasets.ImageFolder(val_dir, transform=test_tf)
-    test_dataset = datasets.ImageFolder(test_dir, transform=test_tf)
 
     # الداتا لودر
     train_loader = DataLoader(
@@ -66,25 +62,17 @@ def build_dataloaders(config):
         shuffle=False,
         num_workers=num_workers,
     )
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-    )
-
-    return train_loader, val_loader, test_loader
+    return train_loader, val_loader
 
 
 def build_kfold_dataloaders(config):
-    """Build stratified k-fold train/val dataloaders and a fixed test loader."""
+    """Build stratified k-fold train/val dataloaders."""
     data_cfg = config["data"]
     train_cfg = config["train"]
     kfold_cfg = train_cfg.get("kfold", {})
 
     train_dir = data_cfg["train_dir"]
     val_dir = data_cfg["val_dir"]
-    test_dir = data_cfg["test_dir"]
 
     img_size = data_cfg["img_size"]
     batch_size = train_cfg["batch_size"]
@@ -99,7 +87,6 @@ def build_kfold_dataloaders(config):
     for path_value, split_name in (
         (train_dir, "Training"),
         (val_dir, "Validation"),
-        (test_dir, "Test"),
     ):
         if not os.path.exists(path_value):
             raise FileNotFoundError(f"{split_name} data not found at {path_value}")
@@ -143,12 +130,4 @@ def build_kfold_dataloaders(config):
         )
         fold_loaders.append((train_loader, val_loader))
 
-    test_dataset = datasets.ImageFolder(test_dir, transform=test_tf)
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-    )
-
-    return fold_loaders, test_loader
+    return fold_loaders

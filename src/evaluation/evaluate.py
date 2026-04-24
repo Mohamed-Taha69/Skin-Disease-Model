@@ -4,9 +4,9 @@ import numpy as np
 from tqdm import tqdm
 
 
-def evaluate_model(model, test_loader, device, classes, tta: int = 0):
+def evaluate_model(model, eval_loader, device, classes, tta: int = 0):
     """
-    Evaluate the model on the test set.
+    Evaluate the model on the evaluation set.
 
     If tta >= 2, a simple test-time augmentation is applied
     (horizontal flip) and logits are averaged.
@@ -18,7 +18,7 @@ def evaluate_model(model, test_loader, device, classes, tta: int = 0):
     use_tta = tta is not None and int(tta) >= 2
 
     with torch.no_grad():
-        for images, labels in tqdm(test_loader, desc="Evaluating"):
+        for images, labels in tqdm(eval_loader, desc="Evaluating"):
             images, labels = images.to(device), labels.to(device)
 
             outputs = model(images)
@@ -42,6 +42,6 @@ def evaluate_model(model, test_loader, device, classes, tta: int = 0):
     print(cm)
 
     accuracy = np.sum(np.array(all_preds) == np.array(all_labels)) / len(all_labels)
-    print(f"\nTest Accuracy: {accuracy*100:.2f}%")
+    print(f"\nValidation Accuracy: {accuracy*100:.2f}%")
 
     return accuracy, cm

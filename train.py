@@ -67,7 +67,7 @@ def main():
 
     if use_kfold:
         print("Building k-fold dataloaders...")
-        fold_loaders, _ = build_kfold_dataloaders(config)
+        fold_loaders = build_kfold_dataloaders(config)
         n_splits = len(fold_loaders)
         fold_best_accs = []
 
@@ -105,7 +105,7 @@ def main():
         print(f"Mean best val acc: {mean_acc:.2f}%")
     else:
         print("Building dataloaders...")
-        train_loader, val_loader, _ = build_dataloaders(config)
+        train_loader, val_loader = build_dataloaders(config)
 
         print("Building model...")
         model = EfficientNetB3(num_classes=data_cfg["num_classes"]).to(device)

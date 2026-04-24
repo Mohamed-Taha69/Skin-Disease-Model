@@ -15,7 +15,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Load Data
-    _, _, test_loader = build_dataloaders(config)
+    _, val_loader = build_dataloaders(config)
     
     # Load Model
     model = EfficientNetB3(num_classes=config['num_classes'])
@@ -32,7 +32,7 @@ def main():
     # Evaluate (with optional TTA if provided in config)
     infer_cfg = config.get("infer", {})
     tta = infer_cfg.get("tta", 0)
-    evaluate_model(model, test_loader, device, config['classes'], tta=tta)
+    evaluate_model(model, val_loader, device, config['classes'], tta=tta)
 
 if __name__ == "__main__":
     main()

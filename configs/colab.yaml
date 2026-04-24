@@ -9,7 +9,6 @@ data:
   # بعد ما تشغّل split_data.py على كولاب هيبقى عندك الفولدرات دي
   train_dir: /content/drive/MyDrive/data/train
   val_dir: /content/drive/MyDrive/data/val
-  test_dir: /content/drive/MyDrive/data/test 
   num_classes: 4
   class_names: ["Monkeypox", "Chickenpox", "Measles", "Normal"]
   img_size: 224
